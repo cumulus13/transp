@@ -1,0 +1,109 @@
+#!/bin/bash
+
+#author cumulus13 (LD HADI CAHYADI)
+#copyright 2021
+#license GPL-3
+
+ARGV=$@
+re='^[0-9]+$'
+
+usage() {
+	echo "usage: transp [-s] [-h] [level/name] [name/level]"
+	echo "default level 90 to current window"
+	printf "\n"
+}
+
+transp_select() {
+	echo "LEVEL   : " $TR
+	xprop -f _NET_WM_WINDOW_OPACITY 32c -set _NET_WM_WINDOW_OPACITY $((0xffffffff * ${TR} / 100))	
+}
+
+with_opts() {
+	if [[ ${ARGV:0:2} =~ "-s" ]]; then
+		TR=`printf ${ARGV:2}`
+		transp_select
+	elif [[ ${ARGV:0:2} =~ "-h" ]]; then
+		usage
+	fi
+	exit 0
+	# while getopts ":s:h" flag
+	# do
+	# 	case "${flag}" in
+	# 		s) 
+	# 			echo "transp_select"
+	# 			TR=${OPTARG}
+	# 			transp_select
+	# 			exit 0;;
+	# 		h | *) 
+	# 			usage
+	# 			exit 0
+	# 			;;
+	# 		# *) any;;
+	# 	esac
+	# done		
+}
+
+
+if [ -z $1 ]; then
+	usage
+	echo "WID NAME: " `xdotool getactivewindow getwindowname`
+	echo "WID TEXT: " `xdotool getactivewindow`
+	WID=$(printf '0x0%x' `xdotool getactivewindow`)
+	echo "WID HEX : " $WID
+	# usage
+	# exit 0
+elif [[ $1 =~ $re ]]; then
+	if [ -z $2 ]; then
+		echo "WID NAME: " `xdotool getactivewindow getwindowname`
+		echo "WID TEXT: " `xdotool getactivewindow`
+	fi
+	
+	WID=$(printf '0x0%x' `xdotool getactivewindow`)
+	TR=$1
+	if ! [[ -z $2 ]]; then
+		echo "WID NAME: " $2
+		echo "WID TEXT: " `xdotool search --onlyvisible --name "$2" | head -1`
+		WID=$(printf '0x0%x' `xdotool search --onlyvisible --name "$2" | head -1`)
+		echo "WID HEX : " $WID
+		TR=$TR	
+	fi
+elif [[ $2 =~ $re ]]; then
+	if [[ $1 =~ '-s' || $1 =~ '-h' ]]; then
+		with_opts
+	else
+		echo "WID NAME: " $1
+		echo "WID TEXT: " `xdotool search --onlyvisible --name "$1" | head -1`
+		WID=$(printf '0x0%x' `xdotool search --onlyvisible --name "$1" | head -1`)
+		echo "WID HEX : " $WID
+		TR=$2
+	fi
+else
+	if [[ $1 =~ '-s' || $1 =~ '-h' ]]; then
+		with_opts
+	else
+		echo "WID NAME: " $1
+		echo "WID TEXT: " `xdotool search --onlyvisible --name "$1" | head -1`
+		WID=$(printf '0x0%x' `xdotool search --onlyvisible --name "$1" | head -1`)
+		echo "WID HEX : " $WID
+	fi
+fi
+
+
+if [ -z $2 ]; then
+	if [ -z $TR ]; then
+		TR=90
+	fi
+else
+	if [ -z $TR ]; then
+		TR=${2}
+	fi
+fi
+
+if ! [[ $TR =~ $re ]]; then
+	TR=90
+fi
+echo "LEVEL   : " $TR
+xprop -id ${WID} -f _NET_WM_WINDOW_OPACITY 32c -set _NET_WM_WINDOW_OPACITY $((0xffffffff * ${TR} / 100))
+
+
+
